@@ -195,7 +195,7 @@ void afficher_graphe_largeur(pgraphe_t g, int r) {
     printf("\n");
 }
 
-
+//recu
 void afficher_graphe_profondeur(pgraphe_t g, int r) {
     init_couleur_sommet(g); 
     psommet_t sommet = chercher_sommet(g, r); 
