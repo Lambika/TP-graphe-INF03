@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-fap creer_fap_vide() {
+fap creer_fap_vide() { 
     return NULL; 
 }
 
@@ -34,19 +34,21 @@ fap inserer(fap f, void* element, int priorite) {
     }
 }
 
-fap extraire(fap f, void* *element, int *priorite) {
-    if (f == NULL) { 
+fap extraire(fap f, void **element, int *priorite) {
+    if (f == NULL) {
+        *element = NULL;
         return NULL;
     }
 
-    fap extrait = f; 
-    *element = extrait->element;
-    *priorite = extrait->priorite; 
+    fap extrait = f;
+    *element = extrait->element; 
+    *priorite = extrait->priorite;
 
-    f = f->prochain; 
-    free(extrait); 
-    return f; 
+    f = f->prochain;
+    free(extrait);
+    return f;
 }
+
 
 int est_fap_vide(fap f) {
     return f == NULL; 

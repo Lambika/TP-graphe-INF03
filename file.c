@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include "file.h"
 
-
 File *creer_file(psommet_t sommet) {
     File *nouveau = (File *)malloc(sizeof(File));
     if (nouveau == NULL) {
-        fprintf(stderr, "Erreur : Impossible de créer une nouvelle file\n");
         exit(EXIT_FAILURE);
     }
     nouveau->sommet = sommet;

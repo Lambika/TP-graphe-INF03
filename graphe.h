@@ -62,7 +62,7 @@ void ecrire_graphe_colorie (psommet_t p) ;
 int colorier_graphe (pgraphe_t g) ;
 
 void afficher_graphe_profondeur (pgraphe_t g, int r) ;
-
+void parcourir_profondeur(psommet_t sommet);
 void afficher_graphe_largeur (pgraphe_t g, int r) ;
 
 void algo_dijkstra (pgraphe_t g, int r) ;
@@ -76,4 +76,15 @@ int independant (pgraphe_t g);
 int complet (pgraphe_t g) ;
 
 int regulier(pgraphe_t g);
+chemin_t creer_chemin(pgraphe_t g);
+// void afficher_chemin(chemin_t chemin) ;
+int elementaire(pgraphe_t g, chemin_t c) ;
+int simple(pgraphe_t g, chemin_t c) ;
+int eulerien(pgraphe_t g, chemin_t c) ;
+int graphe_hamiltonien(pgraphe_t g) ;
+int verifier_chemin_hamiltonien(pgraphe_t g, psommet_t sommet_initial, psommet_t sommet_actuel, int count) ;
+int distance(pgraphe_t g, int x, int y) ;
+int excentricite(pgraphe_t g, int n) ;
+int diametre(pgraphe_t g) ;
+
 

@@ -36,6 +36,10 @@ int main (int argc, char **argv)
   
   ecrire_graphe_colorie (g) ;
 
+  printf("\nParcours en largeur\n");
+  afficher_graphe_largeur(g,g->label);
+  printf("\nParcours en profondeur\n");
+  afficher_graphe_profondeur(g,g->label);
 
   printf("\n                                    Algo Dijkstra: \n");
   algo_dijkstra(g,g->label);
@@ -70,5 +74,52 @@ int main (int argc, char **argv)
   printf("Complet ? : %s\n", complet(g) ? "OUI" : "NON");
   printf("Régulier: %s\n", regulier(g) ? "OUI" : "NON");
 
+  chemin_t c = creer_chemin(g); 
+  // afficher_chemin(c);
+  if (elementaire(g, c)) {
+        printf("Le chemin est élémentaire.\n");
+    } else {
+        printf("Le chemin n'est pas élémentaire.\n");
+    }
+  if (simple(g, c)) {
+        printf("Le chemin est simple.\n");
+    } else {
+        printf("Le chemin n'est pas simple.\n");
+    }
+  if (eulerien(g, c)) {
+        printf("Le chemin est eulrien.\n");
+    } else {
+        printf("Le chemin n'est pas eulrien.\n");
+    }
+  if (graphe_hamiltonien(g)) {
+        printf("Le chemin est hamiltonien.\n");
+  } else {
+        printf("Le chemin n'est pas hamiltonien.\n");
+    }
+
+      printf("\n                                  distance et excentricité et diametre :\n");
+
+    int x, y;
+    printf("donnez le sommet source : ");
+    scanf("%d", &x);
+    printf("donnez le sommet destination : ");
+    scanf("%d", &y);
+
+    // Test de la fonction distance
+    int dist = distance(g, x, y);
+    printf("La distance entre %d et %d est : %d\n", x, y, dist);
+
+    // Demander à l'utilisateur le sommet pour calculer l'excentricité
+    int n;
+    printf("Entrez le sommet pour l'excentricciité : ");
+    scanf("%d", &n);
+
+    // Test de la fonction excentricite
+    int excentricite_n = excentricite(g, n);
+    printf("L'excentriccité du sommet %d est : %d\n", n, excentricite_n);
+
+    // Test de la fonction diametre
+    int diam = diametre(g);
+    printf("Le diamètre du graphe est : %d\n", diam);
 
 }

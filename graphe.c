@@ -168,24 +168,54 @@ int colorier_graphe (pgraphe_t g)
   
   return max_couleur ;
 }
+void afficher_graphe_largeur(pgraphe_t g, int r) {
+    init_couleur_sommet(g);
+    psommet_t g2 = chercher_sommet(g, r); 
+    fap file = creer_fap_vide(); 
+    inserer(file, g2, 0);
+    printf("%d, ", g2->label); 
+    g2->couleur = 1; 
 
-void afficher_graphe_largeur (pgraphe_t g, int r)
-{
-  /*
-    afficher les sommets du graphe avec un parcours en largeur
-  */
-  
-  return ;
+    while (!est_fap_vide(file)) {
+        void *sommet; 
+        int priorite;
+        extraire(file, &sommet, &priorite); 
+        psommet_t sommet_cast = (psommet_t)sommet;
+        parc_t arcs = sommet_cast->liste_arcs;
+        while (arcs) {
+            if (arcs->dest->couleur == 0) { 
+                printf("%d, ", arcs->dest->label); 
+                inserer(file, arcs->dest, 0);
+                arcs->dest->couleur = 1; 
+            }
+            arcs = arcs->arc_suivant;
+        }
+    }
+    detruire_fap(file); 
+    printf("\n");
 }
 
 
-void afficher_graphe_profondeur (pgraphe_t g, int r)
-{
-  /*
-    afficher les sommets du graphe avec un parcours en profondeur
-  */
-  
-  return ;
+void afficher_graphe_profondeur(pgraphe_t g, int r) {
+    init_couleur_sommet(g); 
+    psommet_t sommet = chercher_sommet(g, r); 
+    parcourir_profondeur(sommet); 
+}
+
+void parcourir_profondeur(psommet_t sommet) {
+    if (sommet == NULL) {
+        return;
+    }
+
+    printf("%d :> ", sommet->label);
+    sommet->couleur = 1; 
+    parc_t arcs = sommet->liste_arcs;
+    while (arcs) {
+        if (arcs->dest->couleur == 0) { 
+            parcourir_profondeur(arcs->dest);
+        }
+        arcs = arcs->arc_suivant;
+    }
 }
 
 void initialiser_distance_racine(pgraphe_t graphe, int infini) {
@@ -342,6 +372,44 @@ int regulier(pgraphe_t g) {
     return 1; 
 }
 
+// ---------------------------------------------------------------------------------------------------
+chemin_t creer_chemin(pgraphe_t g) {
+    chemin_t chemin;
+    chemin.permier_sommet = g;
+    if (g == NULL) {
+        printf("\n Pas de chemin \n");
+        return chemin;
+    }
+
+    psommet_t sommet_courant = g;
+    parc_t arc = sommet_courant->liste_arcs; 
+
+    while (arc != NULL) {
+        parc_t nouvel_arc = (parc_t)malloc(sizeof(arc_t));
+        nouvel_arc->poids = arc->poids;
+        nouvel_arc->dest = arc->dest;
+        nouvel_arc->arc_suivant = chemin.liste_arcs;
+        chemin.liste_arcs = nouvel_arc;
+        sommet_courant = arc->dest;
+        arc = sommet_courant->liste_arcs; 
+    }
+
+    return chemin;
+}
+
+
+// void afficher_chemin(chemin_t c) {
+//     parc_t arc = c.liste_arcs;
+//     printf("Chemin : ");
+//     while (arc != NULL) {
+//         printf(" -> %d ", arc->dest->label);
+//         arc = arc->arc_suivant;
+//     }
+//     printf("\n");
+// }
+
+
+
 
 int elementaire(pgraphe_t g, chemin_t c) {
     psommet_t sommet = chercher_sommet(g, c.permier_sommet->label);
@@ -357,20 +425,173 @@ int elementaire(pgraphe_t g, chemin_t c) {
             return 0;
         }
         sommet_precedent = arc->dest;
-
-        if (existence_arc(sommet->liste_arcs, arc->dest) == NULL) {
-            printf("Le chemin n'est pas élémentaire. Il n'y a pas d'arc entre les sommets %d et %d.\n", sommet->label, arc->dest->label);
-            return 0;
-        }
-
-        sommet = arc->dest;
     }
 
     return 1;
 }
 
+int simple(pgraphe_t g, chemin_t c) {
+    int* arcs_parcourus = (int*)malloc(nombre_arcs(g) * sizeof(int));
+    int index = 0;
 
+    parc_t arc = c.liste_arcs;
+    while (arc != NULL) {
 
-/*
-  placer les fonctions de l'examen 2017 juste apres
-*/
+        for (int i = 0; i < index; i++) {
+            if (arcs_parcourus[i] == arc->poids) {
+                free(arcs_parcourus);
+                return 0; 
+            }
+        }
+        arcs_parcourus[index++] = arc->poids;
+        arc = arc->arc_suivant; 
+    }
+
+    free(arcs_parcourus);
+
+    return 1; 
+}
+int eulerien(pgraphe_t g, chemin_t c) {
+    int nb_arcs_graphe = nombre_arcs(g);
+
+    int nb_arcs_chemin = 0;
+    parc_t arc = c.liste_arcs;
+    while (arc != NULL) {
+        nb_arcs_chemin++;
+        arc = arc->arc_suivant;
+    }
+    return nb_arcs_chemin == nb_arcs_graphe;
+}
+int graphe_eulerien(pgraphe_t g) {
+    for (psommet_t sommet = g; sommet != NULL; sommet = sommet->sommet_suivant) {
+        int degre_sortant = degre_sortant_sommet(g, sommet);
+
+        if (degre_sortant % 2 != 0) {//si c'est impaire pas eulerien
+            return 0;
+        }
+    }
+    return 1;
+}
+int graphe_hamiltonien(pgraphe_t g) {
+    if (g == NULL) {
+        return 0;
+    }
+
+    for (psommet_t sommet = g; sommet != NULL; sommet = sommet->sommet_suivant) {
+        init_couleur_sommet(g);
+
+        if (verifier_chemin_hamiltonien(g, sommet, sommet, 1)) {
+            return 1; 
+        }
+    }
+
+    return 0;
+}
+// Pour cette fonction l'idée de recusivité est prise d'internet .
+int verifier_chemin_hamiltonien(pgraphe_t g, psommet_t sommet_initial, psommet_t sommet_actuel, int count) {
+    sommet_actuel->couleur = 1;
+
+    if (count == nombre_sommets(g)) {
+        return 1;
+    }
+
+    for (parc_t arc = sommet_actuel->liste_arcs; arc != NULL; arc = arc->arc_suivant) {
+        if (arc->dest->couleur == 0) {
+            if (verifier_chemin_hamiltonien(g, sommet_initial, arc->dest, count + 1)) {
+                return 1; 
+            }
+        }
+    }
+    sommet_actuel->couleur = 0;
+    return 0;
+}
+int distance(pgraphe_t g, int x, int y) {
+    psommet_t x1 = chercher_sommet(g, x);
+    psommet_t y1 = chercher_sommet(g, y);
+    if (x1 == NULL || y1 == NULL) {
+        printf("Un/deux de ces sommets ne sont pas dans le graphe\n");
+        return -1; 
+    }
+
+    init_couleur_sommet(g);
+    initialiser_distance_racine(g, INT_MAX);
+
+    fap file = creer_fap_vide();
+
+    x1->distance_racine = 0;
+
+    file = inserer(file, x1, x1->distance_racine);
+
+    // dijkstra là
+    while (!est_fap_vide(file)) {
+        int distance;
+        file = extraire(file, (void **)&x1, &distance);
+        x1->couleur = 1;
+        if (x1 == y1) {
+            return distance;
+        }
+        for (parc_t arc = x1->liste_arcs; arc != NULL; arc = arc->arc_suivant) {
+            
+            if (arc->dest->couleur == 0 || arc->dest->distance_racine > distance + arc->poids) {
+                arc->dest->couleur = 1; 
+                arc->dest->distance_racine = distance + arc->poids;
+                file = inserer(file, arc->dest, arc->dest->distance_racine);
+            }
+        }
+    }
+
+    printf("pas de chemins.\n");
+    return -1; //err
+}
+int excentricite(pgraphe_t g, int n) {
+    psommet_t sommet_n = chercher_sommet(g, n);
+    if (sommet_n == NULL) {
+        printf("Le sommet %d n'existe pas dans le graphe ^^.\n", n);
+        return -1;
+    }
+
+    init_couleur_sommet(g);
+    initialiser_distance_racine(g, INT_MAX);
+
+    fap file = creer_fap_vide();
+
+    sommet_n->distance_racine = 0;
+
+    file = inserer(file, sommet_n, sommet_n->distance_racine);
+
+    int excentricite_max = -1;
+
+    while (!est_fap_vide(file)) {
+        int distance;
+        file = extraire(file, (void **)&sommet_n, &distance);
+        sommet_n->couleur = 1;
+
+        // maj max
+        if (distance > excentricite_max) {
+            excentricite_max = distance;
+        }
+
+        for (parc_t arc = sommet_n->liste_arcs; arc != NULL; arc = arc->arc_suivant) {
+            if (arc->dest->couleur == 0 || arc->dest->distance_racine > distance + arc->poids) {
+                arc->dest->couleur = 1; // visité
+                arc->dest->distance_racine = distance + arc->poids; // maj distance
+
+                file = inserer(file, arc->dest, arc->dest->distance_racine);//inserer le sommet  
+            }
+        }
+    }
+
+    return excentricite_max;
+}
+int diametre(pgraphe_t g) {
+    int dia_max = 0;
+
+    for (psommet_t sommet = g; sommet != NULL; sommet = sommet->sommet_suivant) {
+        int excentricicite_sommet = excentricite(g, sommet->label);
+
+        if (excentricicite_sommet > dia_max) {
+            dia_max = excentricicite_sommet;
+        }
+    }
+    return dia_max;
+}
