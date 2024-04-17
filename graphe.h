@@ -12,6 +12,7 @@ typedef struct s
   parc_t     liste_arcs ; // arcs sortants du sommet
   struct s   *sommet_suivant ; // sommet suivant dans le graphe
   int        couleur ; // couleur du sommet
+  int         distance_racine;
 } sommet_t, *psommet_t ;
 
 /*
@@ -33,6 +34,14 @@ typedef struct a {
 */
 
 typedef psommet_t pgraphe_t ;
+
+
+typedef struct c{
+    psommet_t permier_sommet;
+    parc_t liste_arcs;
+} chemin_t, *pchemin_t;
+
+
 
 psommet_t chercher_sommet (pgraphe_t g, int label) ;
 
@@ -57,3 +66,14 @@ void afficher_graphe_profondeur (pgraphe_t g, int r) ;
 void afficher_graphe_largeur (pgraphe_t g, int r) ;
 
 void algo_dijkstra (pgraphe_t g, int r) ;
+void afficher_dijkstra(pgraphe_t g);
+int degre_sortant_sommet(pgraphe_t g, psommet_t s) ;
+int degre_entrant_sommet(pgraphe_t g, psommet_t s) ;
+int degre_maximal_graphe(pgraphe_t g) ;
+int degre_minimal_graphe(pgraphe_t g) ;
+int independant (pgraphe_t g);
+
+int complet (pgraphe_t g) ;
+
+int regulier(pgraphe_t g);
+

@@ -8,8 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-
+#include "fap.h"
 #include "graphe.h"
+#include "stdbool.h"
 
 
 psommet_t chercher_sommet (pgraphe_t g, int label)
@@ -187,14 +188,59 @@ void afficher_graphe_profondeur (pgraphe_t g, int r)
   return ;
 }
 
-void algo_dijkstra (pgraphe_t g, int r)
-{
-  /*
-    algorithme de dijkstra
-    des variables ou des chanmps doivent etre ajoutees dans les structures.
-  */
+void initialiser_distance_racine(pgraphe_t graphe, int infini) {
+    psommet_t sommet = graphe;
+    while (sommet != NULL) {
+        sommet->distance_racine = infini;
+        sommet = sommet->sommet_suivant;
+    }
+}
 
-  return ;
+void algo_dijkstra(pgraphe_t g, int r) {
+    if (!g) 
+        return;
+
+    init_couleur_sommet(g);
+    initialiser_distance_racine(g, INT_MAX); 
+
+    fap file = creer_fap_vide(); 
+    psommet_t sommet_depart = chercher_sommet(g, r); 
+    if (!sommet_depart) 
+        return;
+
+    sommet_depart->distance_racine = 0;
+
+    file = inserer(file, sommet_depart, sommet_depart->distance_racine); 
+
+    while (!est_fap_vide(file)) { 
+        int distance;
+        psommet_t sommet_courant;
+        file = extraire(file, (void **)&sommet_courant, &distance); 
+
+        sommet_courant->couleur = 1; 
+
+        for (parc_t arc = sommet_courant->liste_arcs; arc != NULL; arc = arc->arc_suivant) {
+            
+            if (arc->dest->couleur == 0 || arc->dest->distance_racine > distance + arc->poids) {
+                arc->dest->couleur = 1; 
+                arc->dest->distance_racine = distance + arc->poids; 
+                file = inserer(file, arc->dest, arc->dest->distance_racine); 
+            }
+        }
+    }
+}
+
+void afficher_dijkstra(pgraphe_t g) {
+    bool aucun_chemin_trouve = true;
+    for (psommet_t s = g; s != NULL; s = s->sommet_suivant) {
+        if (s->distance_racine != INT_MAX) { 
+            aucun_chemin_trouve = false; 
+            printf("Le sommet %d est accessible à une distance de %d\n", s->label, s->distance_racine);
+        }
+    }
+    if (aucun_chemin_trouve) { 
+        printf("Aucun chemin trouvé dans le graphe.\n");
+    }
 }
 
 
@@ -206,73 +252,122 @@ void algo_dijkstra (pgraphe_t g, int r)
 
 
 
-int degre_sortant_sommet (pgraphe_t g, psommet_t s)
-{
-  /*
-    Cette fonction retourne le nombre d'arcs sortants 
-    du sommet n dans le graphe g
-  */ 
+int degre_sortant_sommet  (pgraphe_t g, psommet_t s) {
+    int degre = 0;
+    parc_t arc = s->liste_arcs;
+    while (arc != NULL) {
+        degre++; 
+        arc = arc->arc_suivant; 
+    }
+    return degre; 
+    }
 
-  return 0 ;
-}
+int degre_entrant_sommet  (pgraphe_t g, psommet_t s) {
+    int degre = 0;
+    for (psommet_t sommet = g; sommet != NULL; sommet = sommet->sommet_suivant) {
+        parc_t arc = sommet->liste_arcs;
+        while (arc != NULL) {
 
-int degre_entrant_sommet (pgraphe_t g, psommet_t s)
-{
-  /*
-    Cette fonction retourne le nombre d'arcs entrants 
-    dans le noeud n dans le graphe g
-  */ 
+            if (arc->dest == s) {
+                degre++;
+            }
+            arc = arc->arc_suivant;
+        }
+    }
 
-  return 0 ;
-}
-
-int degre_maximal_graphe (pgraphe_t g)
-{
-  /*
-    Max des degres des sommets du graphe g
-  */
-
-  return 0 ;
+    return degre;
 }
 
 
-int degre_minimal_graphe (pgraphe_t g)
-{
-  /*
-    Min des degres des sommets du graphe g
-  */
+int degre_maximal_graphe  (pgraphe_t g) {
+    int degre_maximal = 0; 
 
-  return 0 ;
+    for (psommet_t sommet = g; sommet != NULL; sommet = sommet->sommet_suivant) {
+        int degre = degre_sortant_sommet(g, sommet);
+        if (degre > degre_maximal) {
+            degre_maximal = degre; 
+        }
+    }
+
+    return degre_maximal;
+}
+
+int degre_minimal_graphe  (pgraphe_t g) {
+    int degre_minimal = INT_MAX; 
+
+    for (psommet_t sommet = g; sommet != NULL; sommet = sommet->sommet_suivant) {
+        int degre = degre_sortant_sommet(g, sommet); 
+        if (degre < degre_minimal) {
+            degre_minimal = degre; 
+        }
+    }
+    return degre_minimal;
 }
 
 
 int independant (pgraphe_t g)
 {
-  /* Les aretes du graphe n'ont pas de sommet en commun */
+    return degre_maximal_graphe(g) <= 1;// si c'est plus cad  que directement y'a des sommets en communs 
+} 
 
-  return 0 ;
+
+
+int complet (pgraphe_t g) {
+    for (psommet_t sommet1 = g; sommet1 != NULL; sommet1 = sommet1->sommet_suivant) {
+        for (psommet_t sommet2 = sommet1->sommet_suivant; sommet2 != NULL; sommet2 = sommet2->sommet_suivant) {
+            int a_relie = 0;
+            for (parc_t arc = sommet1->liste_arcs; arc != NULL; arc = arc->arc_suivant) {
+                if (arc->dest == sommet2) {
+                    a_relie = 1;
+                    break;
+                }
+            }
+            if (!a_relie) {
+                return 0;
+            }
+        }
+    }
+    return 1; 
 }
 
 
+int regulier(pgraphe_t g) {
+    int degre = degre_sortant_sommet(g, g);
 
-int complet (pgraphe_t g)
-{
-  /* Toutes les paires de sommet du graphe sont jointes par un arc */
-
-  return 0 ;
+    for (psommet_t sommet = g->sommet_suivant; sommet != NULL; sommet = sommet->sommet_suivant) {
+        if (degre_sortant_sommet(g, sommet) != degre) {
+            return 0;
+        }
+    }
+    return 1; 
 }
 
-int regulier (pgraphe_t g)
-{
-  /* 
-     graphe regulier: tous les sommets ont le meme degre
-     g est le ponteur vers le premier sommet du graphe
-     renvoie 1 si le graphe est régulier, 0 sinon
-  */
 
-  return 0 ;
+int elementaire(pgraphe_t g, chemin_t c) {
+    psommet_t sommet = chercher_sommet(g, c.permier_sommet->label);
+    if (sommet == NULL) {
+        printf("Le sommet initial n'existe pas dans le graphe.\n");
+        return 0;
+    }
+
+    psommet_t sommet_precedent = NULL;
+    for (parc_t arc = c.liste_arcs; arc != NULL; arc = arc->arc_suivant) {
+        if (sommet_precedent != NULL && sommet_precedent == arc->dest) {
+            printf("Le chemin n'est pas élémentaire. Il passe deux fois par le sommet %d.\n", arc->dest->label);
+            return 0;
+        }
+        sommet_precedent = arc->dest;
+
+        if (existence_arc(sommet->liste_arcs, arc->dest) == NULL) {
+            printf("Le chemin n'est pas élémentaire. Il n'y a pas d'arc entre les sommets %d et %d.\n", sommet->label, arc->dest->label);
+            return 0;
+        }
+
+        sommet = arc->dest;
+    }
+
+    return 1;
 }
-
 
 
 
